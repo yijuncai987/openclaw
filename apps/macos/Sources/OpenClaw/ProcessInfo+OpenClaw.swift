@@ -26,7 +26,14 @@ extension ProcessInfo {
 
     var isNixMode: Bool {
         let isAppBundle = Bundle.main.bundleURL.pathExtension == "app"
-        let stableSuite = UserDefaults(suiteName: launchdLabel)
+        // When the app's bundle identifier matches launchdLabel, UserDefaults(suiteName:) with the
+        // same identifier is invalid (macOS rejects using your own bundle ID as a suite name).
+        // The stable suite is only useful when the bundle ID differs (Nix deployments).
+        let stableSuite: UserDefaults? = if Bundle.main.bundleIdentifier == launchdLabel {
+            nil
+        } else {
+            UserDefaults(suiteName: launchdLabel)
+        }
         return Self.resolveNixMode(
             environment: self.environment,
             standard: .standard,
